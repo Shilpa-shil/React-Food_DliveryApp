@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { MdFastfood, MdCloudUpload, MdDelete, MdFoodBank, MdAttachMoney } from "react-icons/md";
 import { categories } from "../utils/Data";
 import Loader from "../components/Loader";
-import { ref,uploadBytesResumable } from "firebase/storage";
+import { deleteObject, getDownloadURL, ref,uploadBytesResumable } from "firebase/storage";
 import { storage } from "../firebase.config";
 
   const CreateContainer = () => {
@@ -26,11 +26,79 @@ import { storage } from "../firebase.config";
 
     uploadTask.on('state_changed', (snapshot) =>{
       const uploadProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-    }, (error) =>{}, () => {})
+  }, (error) =>{
+    console.log(error);
+    setFields(true)
+    setMsg('Error while uploading : Try Again')
+    setAlertStatus('danger')
+    setTimeout(() => {
+      setFields(false)
+      setIsLoading(false)
+    }, 4000);
+   }, () =>{
+  getDownloadURL(uploadTask.snapshot.ref).then(downloadURL =>{
+  setImageAsset(downloadURL)
+  setIsLoading(false)
+  setFields(true);
+  setMsg('Image uploaded successfully ');
+  setAlertStatus('success')
+  setTimeout(()=>{
+    setFields(false)
+  }, 4000);
+}) 
+    })
   };
 
-  const deleteImage = () => {};
-  const saveDetails = () => {};
+  const deleteImage = () => {
+    setIsLoading(true);
+  const deleteRef = ref(storage, imageAsset);
+  deleteObject(deleteRef).then(() => {
+    setImageAsset(null)
+    setIsLoading(false)
+    setFields(true);
+    setMsg('Image deleted successfully ');
+  setAlertStatus('success')
+  setTimeout(()=>{
+    setFields(false)
+  }, 4000);
+}) 
+  };
+ 
+  const saveDetails = () => {
+    setIsLoading(true)
+    try{
+if((!title || !calories || !imageAsset || !price || !category)){
+
+  setFields(true);
+  setMsg("Required fields cant be empty");
+  setAlertStatus("danger")
+  setTimeout(() =>{
+    setFields(false)
+    setIsLoading(false);
+  }, 4000);
+}else{
+  const data = {
+    id : `${Date.now()}`,
+    title : title,
+    imageURL : imageAsset,
+    category : category,
+    calories : calories,
+    qty : 1,
+    price : price
+  }
+  }
+
+    }catch (error){
+      console.log(error)
+      setFields(true)
+      setMsg("Error while uploading. Try again")
+      setAlertStatus("danger")
+      setTimeout(() => {
+        setFields(false)
+        setIsLoading(false)
+      }, 4000)
+    }
+  };
 
   return (
     <div className="w-full min-h-screen flex items-center justify-center">
